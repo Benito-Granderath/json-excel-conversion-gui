@@ -5,7 +5,7 @@
     <ProjectGuid>95eaed1d-0ead-49c6-ac5b-437cb70ec9f1</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>json2excelmapping.py</StartupFile>
+    <StartupFile>final.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,7 +22,10 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="final.py" />
     <Compile Include="json2excelmapping.py" />
+    <Compile Include="testing.py" />
+    <Compile Include="UserInterface.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
