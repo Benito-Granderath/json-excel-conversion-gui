@@ -2,15 +2,19 @@
 import json
 from tkinter import filedialog, messagebox
 import tkinter as tk
+import os
 
 class json2excel:
     def __init__(self, root):
         self.json_data = None
+        self.excel_path = None
         self.root = root
         self.setup_ui()
         
 
     def setup_ui(self):
+        self.root.title('Conversion Tool')
+        self.root.geometry('700x300')
         promptButton = tk.Button(self.root, text="Datei auswählen", font=("Arial", 16), command=self.read_path)
         promptButton.pack(padx=50, pady=50)
         buttonFrame = tk.Frame(self.root)
@@ -23,21 +27,26 @@ class json2excel:
         btn1 = tk.Button(buttonFrame, text="json -> excel", font=('Arial', 18), height=2, width=15, command=self.convert_to_excel)
         btn1.grid(row=4, column=2, sticky=tk.W+tk.E)
 
-        btn2 = tk.Button(buttonFrame, text="excel -> json", font=('Arial', 18), height=2, width=15)
+        btn2 = tk.Button(buttonFrame, text="excel -> json", font=('Arial', 18), height=2, width=15, command=self.convert_to_json)
         btn2.grid(row=4, column=5, sticky=tk.W+tk.E)
 
         buttonFrame.pack()
 
-    
     def read_path(self):
         file_path = filedialog.askopenfilename()
-        if file_path:
+        if file_path.endswith('.json'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 self.json_data = json.load(f)
                 display_file_path = tk.Label(self.root, text=f"{file_path}")
                 display_file_path.pack()
+            print(self.json_data)
+        elif file_path.endswith('.xlsx'):
+            self.excel_path = file_path
+            display_file_path = tk.Label(self.root, text=f"{file_path}")
+            display_file_path.pack()
+        else:
+            messagebox.showerror(title="Fehler", message='Datei nicht als json oder xlsx erkannt')
 
-            
     def convert_to_excel(self):
         if self.json_data:
             fields_df = pd.DataFrame([
@@ -81,11 +90,60 @@ class json2excel:
                 rules_df.to_excel(writer, sheet_name='Regeln', index=False)
                 search_lists_df.to_excel(writer, sheet_name='Suchlisten', index=False)
             messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {excel_path} geschrieben!")
-
-        else:
-            messagebox.showerror(title="Kein Erfolg", message="Wir können leider keine Luft konvertieren")
-
+        
+        elif self.json_data == None:
+            messagebox.showerror(title="Fehler", message="Keine Valide Json Datei ausgewählt")
             
+    def convert_to_json(self):
+        if self.excel_path:
+            fields_df = pd.read_excel(self.excel_path, sheet_name='Felder')
+            rules_df = pd.read_excel(self.excel_path, sheet_name='Regeln')
+            search_lists_df = pd.read_excel(self.excel_path, sheet_name='Suchlisten')
+            
+            json_data = {
+                    'fields': fields_df.to_dict(orient='records'),
+                    'searchLists': [],
+                    'rules': []
+                }        
+        
+            for name, group in search_lists_df.groupby('Name'):
+                json_data['searchLists'].append({
+                        'name': name,
+                        'values': group['Wert'].tolist()                
+                    })
+        
+            rules_grouped = rules_df.groupby('Name')
+            for name, group in rules_grouped:
+                rule = {
+                    'isActive': group['Aktiv'].iloc[0],
+                    'name': name,
+                    'result': group['Ergebnis'].iloc[0],
+                    'criteria': []
+                }
+                for _, row in group.iterrows():
+                    criterion = {
+                        'type': row['Kriterientyp'],
+                        'field': row['Kriterienfeld']
+                    }
+                    if 'Operator' in row and not pd.isna(row['Operator']):
+                        criterion.update({'operator': row['Operator'], 'value': row['Wert']})
+                    if 'Suchliste' in row and not pd.isna(row['Suchliste']):
+                        criterion.update({'searchList': row['Suchliste']})
+                    if 'Von' in row and not pd.isna(row['Von']):
+                        criterion.update({'lowerLimit': row['Von'], 'upperLimit': row['Bis']})
+            
+                    rule['criteria'].append(criterion)
+        
+                json_data['rules'].append(rule)
+    
+            json_path = filedialog.asksaveasfilename(defaultextension=".json")
+            with open(json_path, 'w') as json_file:
+                json.dump(json_data, json_file, indent=4, default=str)
+            
+        else:
+            messagebox.showerror(title="Fehler", message="Keine Valide Excel Datei ausgewählt")
+            
+    
 root = tk.Tk()
-app = json2excel(root)
+json2excel(root)
 root.mainloop()
