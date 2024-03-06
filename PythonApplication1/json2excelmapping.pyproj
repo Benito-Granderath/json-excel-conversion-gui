@@ -5,7 +5,7 @@
     <ProjectGuid>95eaed1d-0ead-49c6-ac5b-437cb70ec9f1</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>final.py</StartupFile>
+    <StartupFile>ConversionToolGUI.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -22,7 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="final.py" />
+    <Compile Include="ConversionToolGUI.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

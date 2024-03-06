@@ -99,45 +99,51 @@ class json2excel:
             fields_df = pd.read_excel(self.excel_path, sheet_name='Felder')
             rules_df = pd.read_excel(self.excel_path, sheet_name='Regeln')
             search_lists_df = pd.read_excel(self.excel_path, sheet_name='Suchlisten')
-            
+            print(search_lists_df)
             json_data = {
-                    'fields': fields_df.to_dict(orient='records'),
+                    'fields': [],
                     'searchLists': [],
                     'rules': []
-                }        
-        
-            for name, group in search_lists_df.groupby('Name'):
-                json_data['searchLists'].append({
-                        'name': name,
-                        'values': group['Wert'].tolist()                
-                    })
-        
-            rules_grouped = rules_df.groupby('Name')
-            for name, group in rules_grouped:
-                rule = {
-                    'isActive': group['Aktiv'].iloc[0],
-                    'name': name,
-                    'result': group['Ergebnis'].iloc[0],
-                    'criteria': []
                 }
-                for _, row in group.iterrows():
-                    criterion = {
-                        'type': row['Kriterientyp'],
-                        'field': row['Kriterienfeld']
+            if fields_df.empty == False:
+                for name, group in fields_df.groupby('Name'):
+                    json_data['fields'].append({
+                        'type': group['Typ'].iloc[0],
+                        'name': name,
+                        'dataType': group['Datentyp'].iloc[0]
+                    })
+            if search_lists_df.empty == False:
+                for name, group in search_lists_df.groupby('Name'):
+                    json_data['searchLists'].append({
+                            'name': name,
+                            'values': group['Wert'].tolist()                
+                        })
+            if rules_df.empty == False:
+                for name, group in rules_df.groupby('Name'):
+                    rule = {
+                        'isActive': group['Aktiv'].iloc[0],
+                        'name': name,
+                        'result': group['Ergebnis'].iloc[0],
+                        'criteria': []
                     }
-                    if 'Operator' in row and not pd.isna(row['Operator']):
-                        criterion.update({'operator': row['Operator'], 'value': str(row['Wert'])})
-                    if 'Suchliste' in row and not pd.isna(row['Suchliste']):
-                        criterion.update({'searchList': row['Suchliste']})
-                    if 'Von' in row and not pd.isna(row['Von']):
-                        criterion.update({'lowerLimit': row['Von'], 'upperLimit': row['Bis']})
+                    for _, row in group.iterrows():
+                        criterion = {
+                            'type': row['Kriterientyp'],
+                            'field': row['Kriterienfeld']
+                        }
+                        if 'Operator' in row and not pd.isna(row['Operator']):
+                            criterion.update({'operator': row['Operator'], 'value': str(row['Wert'])})
+                        if 'Suchliste' in row and not pd.isna(row['Suchliste']):
+                            criterion.update({'searchList': row['Suchliste']})
+                        if 'Von' in row and not pd.isna(row['Von']):
+                            criterion.update({'lowerLimit': str(row['Von']), 'upperLimit': str(row['Bis'])})
             
-                    rule['criteria'].append(criterion)
-                json_data['rules'].append(rule)
+                        rule['criteria'].append(criterion)
+                    json_data['rules'].append(rule)
     
             json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json")
-            with open(json_path, 'w') as json_file:
-                json.dump(json_data, json_file, indent=4, default=bool)
+            with open(json_path, 'w', encoding='utf8') as json_file:
+                json.dump(json_data, json_file, indent=4, default=bool, ensure_ascii=False)
             messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {json_path} geschrieben!")                
             
         else:
