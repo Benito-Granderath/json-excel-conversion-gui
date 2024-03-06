@@ -84,7 +84,7 @@ class json2excel:
 
             rules_df = pd.DataFrame(rules_records)
 
-            excel_path = filedialog.asksaveasfilename(defaultextension=".xlsx")
+            excel_path = filedialog.asksaveasfilename(initialfile = "mapped_excel_data.xlsx", defaultextension=".xlsx")
             with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
                 fields_df.to_excel(writer, sheet_name='Felder', index=False)
                 rules_df.to_excel(writer, sheet_name='Regeln', index=False)
@@ -126,19 +126,19 @@ class json2excel:
                         'field': row['Kriterienfeld']
                     }
                     if 'Operator' in row and not pd.isna(row['Operator']):
-                        criterion.update({'operator': row['Operator'], 'value': row['Wert']})
+                        criterion.update({'operator': row['Operator'], 'value': str(row['Wert'])})
                     if 'Suchliste' in row and not pd.isna(row['Suchliste']):
                         criterion.update({'searchList': row['Suchliste']})
                     if 'Von' in row and not pd.isna(row['Von']):
                         criterion.update({'lowerLimit': row['Von'], 'upperLimit': row['Bis']})
             
                     rule['criteria'].append(criterion)
-        
                 json_data['rules'].append(rule)
     
-            json_path = filedialog.asksaveasfilename(defaultextension=".json")
+            json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json")
             with open(json_path, 'w') as json_file:
-                json.dump(json_data, json_file, indent=4, default=str)
+                json.dump(json_data, json_file, indent=4, default=bool)
+            messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {json_path} geschrieben!")                
             
         else:
             messagebox.showerror(title="Fehler", message="Keine Valide Excel Datei ausgewählt")
