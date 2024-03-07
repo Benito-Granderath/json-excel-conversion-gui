@@ -86,7 +86,7 @@ class ConversionToolGUI:
 
             rules_df = pd.DataFrame(rules_records)
 
-            excel_path = filedialog.asksaveasfilename(initialfile = "mapped_excel_data.xlsx", defaultextension=".xlsx")
+            excel_path = filedialog.asksaveasfilename(initialfile = "mapped_excel_data.xlsx", defaultextension=".xlsx", filetypes=(("Excel-Tabelle", "*.xlsx"), ("Alle Dateien", "*.*")))
             with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
                 fields_df.to_excel(writer, sheet_name='Felder', index=False)
                 rules_df.to_excel(writer, sheet_name='Regeln', index=False)
@@ -142,7 +142,7 @@ class ConversionToolGUI:
                             'name': name,
                             'values': group['Wert'].tolist()                
                         })
-            json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json")
+            json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json", filetypes=(("Json", "*.json"), ("Alle Dateien", "*.*")))
             with open(json_path, 'w', encoding='utf8') as json_file:
                 json.dump(json_data, json_file, indent=4, default=bool, ensure_ascii=False)
             messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {json_path} geschrieben!")                
