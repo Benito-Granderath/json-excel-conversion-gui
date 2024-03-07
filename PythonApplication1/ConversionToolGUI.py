@@ -4,20 +4,23 @@ from tkinter import filedialog, messagebox
 import tkinter as tk
 import os
 
-class json2excel:
+class ConversionToolGUI:
     def __init__(self, root):
         self.json_data = None
         self.excel_path = None
         self.root = root
+        self.displayFilePath = None
         self.setup_ui()
         
 
     def setup_ui(self):
         self.root.title('Conversion Tool')
         self.root.geometry('700x300')
+        
         promptButton = tk.Button(self.root, text="Datei auswählen", font=("Arial", 16), command=self.read_path)
-        promptButton.pack(padx=50, pady=50)
         buttonFrame = tk.Frame(self.root)
+        
+        self.displayFilePath = tk.Label(self.root, text="Keine Datei ausgewählt")
         
         buttonFrame.columnconfigure(2, weight=5)
         buttonFrame.columnconfigure(3, weight=5)
@@ -29,23 +32,22 @@ class json2excel:
 
         btn2 = tk.Button(buttonFrame, text="excel -> json", font=('Arial', 18), height=2, width=15, command=self.convert_to_json)
         btn2.grid(row=4, column=5, sticky=tk.W+tk.E)
-
+        
+        promptButton.pack(padx=50, pady=50)
         buttonFrame.pack()
+        self.displayFilePath.pack()
 
     def read_path(self):
         file_path = filedialog.askopenfilename()
         if file_path.endswith('.json'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 self.json_data = json.load(f)
-                display_file_path = tk.Label(self.root, text=f"{file_path}")
-                display_file_path.pack()
             print(self.json_data)
         elif file_path.endswith('.xlsx'):
             self.excel_path = file_path
-            display_file_path = tk.Label(self.root, text=f"{file_path}")
-            display_file_path.pack()
         else:
             messagebox.showerror(title="Fehler", message='Datei nicht als json oder xlsx erkannt')
+        self.displayFilePath.config(text=f"{file_path}")
 
     def convert_to_excel(self):
         if self.json_data:
@@ -112,12 +114,6 @@ class json2excel:
                         'name': name,
                         'dataType': group['Datentyp'].iloc[0]
                     })
-            if search_lists_df.empty == False:
-                for name, group in search_lists_df.groupby('Name'):
-                    json_data['searchLists'].append({
-                            'name': name,
-                            'values': group['Wert'].tolist()                
-                        })
             if rules_df.empty == False:
                 for name, group in rules_df.groupby('Name'):
                     rule = {
@@ -140,7 +136,12 @@ class json2excel:
             
                         rule['criteria'].append(criterion)
                     json_data['rules'].append(rule)
-    
+            if search_lists_df.empty == False:
+                for name, group in search_lists_df.groupby('Name'):
+                    json_data['searchLists'].append({
+                            'name': name,
+                            'values': group['Wert'].tolist()                
+                        })
             json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json")
             with open(json_path, 'w', encoding='utf8') as json_file:
                 json.dump(json_data, json_file, indent=4, default=bool, ensure_ascii=False)
@@ -151,5 +152,5 @@ class json2excel:
             
     
 root = tk.Tk()
-json2excel(root)
+ConversionToolGUI(root)
 root.mainloop()
