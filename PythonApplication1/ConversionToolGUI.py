@@ -80,8 +80,6 @@ class ConversionToolGUI:
                     elif criterion['field'] == 'ERP_BRUTTO_BETRAG':
                         record['Von'] = criterion['lowerLimit']
                         record['Bis'] = criterion['upperLimit']
-        
-        
                     rules_records.append(record)
 
             rules_df = pd.DataFrame(rules_records)
