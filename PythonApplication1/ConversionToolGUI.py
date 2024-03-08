@@ -115,33 +115,40 @@ class ConversionToolGUI:
                         'dataType': group['Datentyp'].iloc[0]
                     })
             if rules_df.empty == False:
-                for name, group in rules_df.groupby('Name'):
-                    rule = {
-                        'isActive': group['Aktiv'].iloc[0],
-                        'name': name,
-                        'result': group['Ergebnis'].iloc[0],
-                        'criteria': []
-                    }
-                    for _, row in group.iterrows():
-                        criterion = {
-                            'type': row['Kriterientyp'],
-                            'field': row['Kriterienfeld']
+                rules_order = {}
+                for index, row in rules_df.iterrows():
+                    rule_name = row['Name']
+                    if rule_name not in rules_order:
+                        rules_order[rule_name] = {
+                            'index': len(json_data['rules']),
+                            'criteria': []
                         }
-                        if 'Operator' in row and not pd.isna(row['Operator']):
-                            criterion.update({'operator': row['Operator'], 'value': str(row['Wert'])})
-                        if 'Suchliste' in row and not pd.isna(row['Suchliste']):
-                            criterion.update({'searchList': row['Suchliste']})
-                        if 'Von' in row and not pd.isna(row['Von']):
-                            criterion.update({'lowerLimit': str(row['Von']), 'upperLimit': str(row['Bis'])})
-            
-                        rule['criteria'].append(criterion)
-                    json_data['rules'].append(rule)
-            if search_lists_df.empty == False:
-                for name, group in search_lists_df.groupby('Name'):
-                    json_data['searchLists'].append({
-                            'name': name,
-                            'values': group['Wert'].tolist()                
+                        json_data['rules'].append({
+                            'isActive': row['Aktiv'],
+                            'name': rule_name,
+                            'result': row['Ergebnis'],
+                            'criteria': rules_order[rule_name]['criteria']
                         })
+                    criterion = {'type': row['Kriterientyp'], 'field': row['Kriterienfeld']}
+                    if pd.notnull(row.get('Operator')):
+                        criterion['operator'] = row['Operator']
+                        criterion['value'] = str(int(row['Wert']))
+                    if pd.notnull(row.get('Suchliste')):
+                        criterion['searchList'] = row['Suchliste']
+                    if pd.notnull(row.get('Von')):
+                        criterion['lowerLimit'] = str(row['Von'])
+                        criterion['upperLimit'] = str(row['Bis'])
+                    rules_order[rule_name]['criteria'].append(criterion)
+                    
+            if search_lists_df.empty == False:
+                search_lists_order = {}
+                for index, row in search_lists_df.iterrows():
+                    name = row['Name']
+                    if name not in search_lists_order:
+                        search_lists_order[name] = len(search_lists_order)
+                        json_data['searchLists'].append({'name': name, 'values': []})
+                    json_data['searchLists'][search_lists_order[name]]['values'].append(row['Wert'])
+    
             json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json", filetypes=(("Json", "*.json"), ("Alle Dateien", "*.*")))
             with open(json_path, 'w', encoding='utf8') as json_file:
                 json.dump(json_data, json_file, indent=4, default=bool, ensure_ascii=False)
