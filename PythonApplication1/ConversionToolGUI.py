@@ -42,7 +42,6 @@ class ConversionToolGUI:
         if file_path.endswith('.json'):
             with open(file_path, 'r', encoding='utf-8') as f:
                 self.json_data = json.load(f)
-            print(self.json_data)
         elif file_path.endswith('.xlsx'):
             self.excel_path = file_path
         else:
@@ -99,7 +98,6 @@ class ConversionToolGUI:
             fields_df = pd.read_excel(self.excel_path, sheet_name='Felder')
             rules_df = pd.read_excel(self.excel_path, sheet_name='Regeln')
             search_lists_df = pd.read_excel(self.excel_path, sheet_name='Suchlisten')
-            print(search_lists_df)
             json_data = {
                     'fields': [],
                     'searchLists': [],
@@ -130,7 +128,7 @@ class ConversionToolGUI:
                     criterion = {'type': row['Kriterientyp'], 'field': row['Kriterienfeld']}
                     if pd.notnull(row.get('Operator')):
                         criterion['operator'] = row['Operator']
-                        criterion['value'] = str(int(row['Wert']))
+                        criterion['value'] = str(row['Wert'])
                     if pd.notnull(row.get('Suchliste')):
                         criterion['searchList'] = row['Suchliste']
                     if pd.notnull(row.get('Von')):
