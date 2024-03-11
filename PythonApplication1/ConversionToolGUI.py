@@ -20,7 +20,7 @@ class ConversionToolGUI:
         promptButton = tk.Button(self.root, text="Datei auswählen", font=("Arial", 16), command=self.read_path)
         buttonFrame = tk.Frame(self.root)
         
-        self.displayFilePath = tk.Label(self.root, text="Keine Datei ausgewählt")
+        self.displayFilePath = tk.Label(self.root, text="Keine Datei ausgewählt.")
         
         buttonFrame.columnconfigure(2, weight=5)
         buttonFrame.columnconfigure(3, weight=5)
@@ -34,18 +34,21 @@ class ConversionToolGUI:
         btn2.grid(row=4, column=5, sticky=tk.W+tk.E)
         
         promptButton.pack(padx=50, pady=50)
+
         buttonFrame.pack()
         self.displayFilePath.pack()
 
     def read_path(self):
         file_path = filedialog.askopenfilename()
         if file_path.endswith('.json'):
+            self.excel_path = None
             with open(file_path, 'r', encoding='utf-8') as f:
                 self.json_data = json.load(f)
         elif file_path.endswith('.xlsx'):
+            self.json_data = None
             self.excel_path = file_path
         else:
-            messagebox.showerror(title="Fehler", message='Datei nicht als json oder xlsx erkannt')
+            messagebox.showerror(title="Fehler", message='Datei nicht als json oder xlsx erkannt.')
         self.displayFilePath.config(text=f"{file_path}")
 
     def convert_to_excel(self):
@@ -82,78 +85,83 @@ class ConversionToolGUI:
                     rules_records.append(record)
 
             rules_df = pd.DataFrame(rules_records)
-
-            excel_path = filedialog.asksaveasfilename(initialfile = "mapped_excel_data.xlsx", defaultextension=".xlsx", filetypes=(("Excel-Tabelle", "*.xlsx"), ("Alle Dateien", "*.*")))
-            with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
-                fields_df.to_excel(writer, sheet_name='Felder', index=False)
-                rules_df.to_excel(writer, sheet_name='Regeln', index=False)
-                search_lists_df.to_excel(writer, sheet_name='Suchlisten', index=False)
-            messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {excel_path} geschrieben!")
-        
+            try:
+                excel_path = filedialog.asksaveasfilename(initialfile = "mapped_excel_data.xlsx", defaultextension=".xlsx", filetypes=(("Excel-Tabelle", "*.xlsx"), ("Alle Dateien", "*.*")))
+                with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
+                    fields_df.to_excel(writer, sheet_name='Felder', index=False)
+                    rules_df.to_excel(writer, sheet_name='Regeln', index=False)
+                    search_lists_df.to_excel(writer, sheet_name='Suchlisten', index=False)
+                messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {excel_path} geschrieben!")
+            except ValueError:
+                messagebox.showerror(title="Fehler", message='Bitte ein valides Dateiformat auswählen.')
+                
         elif self.json_data == None:
-            messagebox.showerror(title="Fehler", message="Keine Valide Json Datei ausgewählt")
+            messagebox.showerror(title="Fehler", message="Keine Valide Json Datei ausgewählt.")
             
     def convert_to_json(self):
-        if self.excel_path:
-            fields_df = pd.read_excel(self.excel_path, sheet_name='Felder')
-            rules_df = pd.read_excel(self.excel_path, sheet_name='Regeln')
-            search_lists_df = pd.read_excel(self.excel_path, sheet_name='Suchlisten')
-            json_data = {
-                    'fields': [],
-                    'searchLists': [],
-                    'rules': []
-                }
-            if fields_df.empty == False:
-                for name, group in fields_df.groupby('Name'):
-                    json_data['fields'].append({
-                        'type': group['Typ'].iloc[0],
-                        'name': name,
-                        'dataType': group['Datentyp'].iloc[0]
-                    })
-            if rules_df.empty == False:
-                rules_order = {}
-                for index, row in rules_df.iterrows():
-                    rule_name = row['Name']
-                    if rule_name not in rules_order:
-                        rules_order[rule_name] = {
-                            'index': len(json_data['rules']),
-                            'criteria': []
-                        }
-                        json_data['rules'].append({
-                            'isActive': row['Aktiv'],
-                            'name': rule_name,
-                            'result': row['Ergebnis'],
-                            'criteria': rules_order[rule_name]['criteria']
+        try:
+            if self.excel_path:
+                fields_df = pd.read_excel(self.excel_path, sheet_name='Felder')
+                rules_df = pd.read_excel(self.excel_path, sheet_name='Regeln')
+                search_lists_df = pd.read_excel(self.excel_path, sheet_name='Suchlisten')
+                json_data = {
+                        'fields': [],
+                        'searchLists': [],
+                        'rules': []
+                    }
+                if fields_df.empty == False:
+                    for name, group in fields_df.groupby('Name'):
+                        json_data['fields'].append({
+                            'type': group['Typ'].iloc[0],
+                            'name': name,
+                            'dataType': group['Datentyp'].iloc[0]
                         })
-                    criterion = {'type': row['Kriterientyp'], 'field': row['Kriterienfeld']}
-                    if pd.notnull(row.get('Operator')):
-                        criterion['operator'] = row['Operator']
-                        criterion['value'] = str(row['Wert'])
-                    if pd.notnull(row.get('Suchliste')):
-                        criterion['searchList'] = row['Suchliste']
-                    if pd.notnull(row.get('Von')):
-                        criterion['lowerLimit'] = str(row['Von'])
-                        criterion['upperLimit'] = str(row['Bis'])
-                    rules_order[rule_name]['criteria'].append(criterion)
-                    
-            if search_lists_df.empty == False:
-                search_lists_order = {}
-                for index, row in search_lists_df.iterrows():
-                    name = row['Name']
-                    if name not in search_lists_order:
-                        search_lists_order[name] = len(search_lists_order)
-                        json_data['searchLists'].append({'name': name, 'values': []})
-                    json_data['searchLists'][search_lists_order[name]]['values'].append(row['Wert'])
+                if rules_df.empty == False:
+                    rules_order = {}
+                    for index, row in rules_df.iterrows():
+                        rule_name = row['Name']
+                        if rule_name not in rules_order:
+                            rules_order[rule_name] = {
+                                'index': len(json_data['rules']),
+                                'criteria': []
+                            }
+                            json_data['rules'].append({
+                                'isActive': row['Aktiv'],
+                                'name': rule_name,
+                                'result': row['Ergebnis'],
+                                'criteria': rules_order[rule_name]['criteria']
+                            })
+                        criterion = {'type': row['Kriterientyp'], 'field': row['Kriterienfeld']}
+                        if pd.notnull(row.get('Operator')):
+                            criterion['operator'] = row['Operator']
+                            criterion['value'] = str(row['Wert'])
+                        if pd.notnull(row.get('Suchliste')):
+                            criterion['searchList'] = row['Suchliste']
+                        if pd.notnull(row.get('Von')):
+                            criterion['lowerLimit'] = str(row['Von'])
+                            criterion['upperLimit'] = str(row['Bis'])
+                        rules_order[rule_name]['criteria'].append(criterion)
+                try:    
+                    if search_lists_df.empty == False:
+                        search_lists_order = {}
+                        for index, row in search_lists_df.iterrows():
+                            name = row['Name']
+                            if name not in search_lists_order:
+                                search_lists_order[name] = len(search_lists_order)
+                                json_data['searchLists'].append({'name': name, 'values': []})
+                            json_data['searchLists'][search_lists_order[name]]['values'].append(row['Wert'])
     
-            json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json", filetypes=(("Json", "*.json"), ("Alle Dateien", "*.*")))
-            with open(json_path, 'w', encoding='utf8') as json_file:
-                json.dump(json_data, json_file, indent=4, default=bool, ensure_ascii=False)
-            messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {json_path} geschrieben!")                
-            
-        else:
-            messagebox.showerror(title="Fehler", message="Keine Valide Excel Datei ausgewählt")
-            
-    
+                    json_path = filedialog.asksaveasfilename(initialfile = "mapped_json_data.json", defaultextension=".json", filetypes=(("Json", "*.json"), ("Alle Dateien", "*.*")))
+                    with open(json_path, 'w', encoding='utf8') as json_file:
+                        json.dump(json_data, json_file, indent=4, default=bool, ensure_ascii=False)
+                    messagebox.showinfo(title="Erfolg!", message=f"Datei erfolgreich zu {json_path} geschrieben!")                
+                except ValueError:
+                    messagebox.showerror(title="Fehler", message='Bitte ein valides Dateiformat auswählen.')
+            else:
+                messagebox.showerror(title="Fehler", message="Keine Valide Excel Datei ausgewählt.")
+        except PermissionError:
+            messagebox.showerror(title="Fehler", message='Die Excel-Datei kann nicht gelesen werden. Möglicherweise ist sie bereits geöffnet.')
+        
 root = tk.Tk()
 ConversionToolGUI(root)
 root.mainloop()
